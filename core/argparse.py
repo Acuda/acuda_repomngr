@@ -24,13 +24,11 @@ def get_arg_parser():
 
     deb_sub_parser = sub_parser.add_parser('deb', help='TBD')
     deb_sub_parser.set_defaults(section='deb')
-    deb_sub_parser.add_argument('action', choices=('copy',), help='TBD')
+    deb_sub_parser.add_argument('action', choices=('copy', 'build', 'delete'), help='TBD')
 
+    repo_sub_parser = sub_parser.add_parser('repo', help='TBD')
+    repo_sub_parser.set_defaults(section='repo')
+    repo_sub_parser.add_argument('action', choices=('init', 'includeall', 'delete'), help='TBD')
 
-    #repo_sub_parser = sub_parser.add_parser('repo', help='TBD')
-    #repo_sub_parser.set_defaults(section='repo')
-
-
-    # repo_sub_parser.add_argument('mode', choices=('C', 'D'), help='TBD')
 
     return parser

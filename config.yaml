@@ -1,37 +1,39 @@
 CONFIGURATION:
   DEB_BUILD_DIR: /opt/acuda_repomngr/data/deb_build_dir
-  REPO_BUILD_DIR: /opt/acuda_repomngr/data/rebo_build_dir
   DEB_CONTROL_TEMPLATE: |
     Package: ${PACKAGE_NAME}
     Version: ${PACKAGE_VERSION}
     Section: ${PACKAGE_SECTION}
-    Priority: ${PACKAGE_SECTION}
+    Priority: ${PACKAGE_PRIORITY}
     Architecture: ${PACKAGE_ARCHITECTURE}
     Depends: ${PACKAGE_DEPENDENCIES}
-    Maintainer: ${PACKAGE_MAINTAINER}Björn Eistel <eistel@gmail.com>
-    Homepage: https://github.com/OpenKinect/libfreenect2/
-    Description: Driver for Kinect One (v2)
-     This Package is a simple deb-Wrapper
-     Source-Code: https://github.com/OpenKinect/libfreenect2/
+    Maintainer: ${PACKAGE_MAINTAINER}
+    Homepage: ${PACKAGE_HOMEPAGE}
+    Description: NO OFFICIAL PACKAGE ${PACKAGE_DESCRIPTION}
   DEB_CONTROL_DEFAULTS:
     PACKAGE_SECTION: misc
     PACKAGE_PRIORITY: optional
     PACKAGE_ARCHITECTURE: amd64
     PACKAGE_DEPENDENCIES: ''
+    PACKAGE_HOMEPAGE: ''
+    PACKAGE_DESCRIPTION: ''
+  REPO_BUILD_DIR: /opt/acuda_repomngr/data/rebo_build_dir
+  REPO_DISTRIBUTIONS_TEMPLATE: |
+    Origin: Acuda
+    Label: Acuda Github
+    Suite: stable
+    Codename: xenial
+    Architectures: amd64
+    Components: main
+    Description: TBD
+  REPO_CODENAME: xenial
 MAINTAINER:
-- beistel: &beistel
-    PACKAGE_MAINTAINER: Björn Eistel <eistel@gmail.com>
-    Package: acuda-${PACKAGE_NAME}
-    Version: ${PACKAGE_VERSION}
-    Architecture: amd64
-    Section: misc
-    Priority: optional
-    Depends: ${PACKAGE_DEPENDENCY}
-    Homepage: ${PACKAGE_HOMEPAGE}
-    Description: |
-      ${PACKAGE_DESCRIPTION}
-- default:
+ beistel: &beistel
+  PACKAGE_MAINTAINER: Björn Eistel <eistel@gmail.com>
+ default:
     <<: *beistel
+ alf: &alf
+  PACKAGE_MAINTAINER: Gordon Shumway <gordon.shumway@melmac.glxy>
 PACKAGES:
 - PACKAGE_NAME: acurep
   PACKAGE_VERSION: 0.0.1
@@ -50,7 +52,8 @@ PACKAGES:
   - usr/local/lib/libfreenect2.so.0.2
   - usr/local/lib/libfreenect2.so.0.2.0
   - usr/local/lib/pkgconfig/freenect2.pc
-- PACKAGE_NAME: test
+- <<: *alf
+  PACKAGE_NAME: test
   PACKAGE_VERSION: 0.0.1
   RELATIVE_TO: /home/beistel/ClionProjects/libfreenectsrc2deb/tmp/libfreenect2_0.2.0
   FILES:

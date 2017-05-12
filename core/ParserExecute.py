@@ -11,6 +11,7 @@
 import os
 import sys
 import shutil
+import subprocess
 
 import yaml
 
@@ -78,6 +79,21 @@ class ParserExecute(object):
     def _write_deb_control(package_yaml, dst_full_filename):
         os.makedirs(os.path.dirname(dst_full_filename), exist_ok=True)
 
+        raw_yaml = ContextManager().raw_yaml
+        template = raw_yaml['CONFIGURATION']['DEB_CONTROL_TEMPLATE']
+        replacement = dict()
+        replacement.update(raw_yaml['CONFIGURATION']['DEB_CONTROL_DEFAULTS'])
+        replacement.update(raw_yaml['MAINTAINER']['default'])
+        replacement.update(package_yaml)
+
+        for key, value in replacement.items():
+            placeholder = '${%s}' % key
+            if placeholder in template:
+                template = template.replace(placeholder, value)
+
+        with open(dst_full_filename, 'w') as f:
+            f.write(template)
+
     @staticmethod
     def section_deb_action_copy():
         raw_yaml = ContextManager().raw_yaml
@@ -96,6 +112,8 @@ class ParserExecute(object):
             package_name = package['PACKAGE_NAME']
             package_version = package['PACKAGE_VERSION']
             package_dir = '%s_%s' % (package_name, package_version)
+
+            printf_info(PIL.INFO, 'copy files for %s ...' % package_name)
 
             dst_package_directory = os.path.sep.join([deb_build_dir, package_dir])
             if os.path.exists(dst_package_directory) and os.path.isdir(dst_package_directory):
@@ -133,12 +151,77 @@ class ParserExecute(object):
                     print_info(PIL.ERROR, 'unknown file type for filename: %s' % src_full_file_path)
                     exit(1)
 
+    @staticmethod
+    def section_deb_action_build():
+        raw_yaml = ContextManager().raw_yaml
+        deb_build_dir = raw_yaml['CONFIGURATION']['DEB_BUILD_DIR']
+        for entry in os.listdir(deb_build_dir):
+            full_filename = os.path.sep.join([deb_build_dir, entry])
+            if not os.path.isdir(full_filename) \
+                    or os.path.islink(full_filename) \
+                    or not 'DEBIAN' in os.listdir(full_filename):
+                continue
+
+            cmd = ['fakeroot', 'dpkg-deb', '--build', entry]
+            msg = subprocess.check_output(cmd, cwd=deb_build_dir)
+            print_info(PIL.INFO, msg.decode('utf-8').rstrip('\n'))
 
 
+    @staticmethod
+    def section_deb_action_delete():
+        raw_yaml = ContextManager().raw_yaml
+        deb_build_dir = raw_yaml['CONFIGURATION']['DEB_BUILD_DIR']
+        if not os.path.isdir(deb_build_dir) or not os.path.exists(deb_build_dir):
+            print_info(PIL.ERROR, 'DEB_BUILD_DIR is no directory!')
+            exit(1)
+        shutil.rmtree(deb_build_dir)
 
 
+    ###############################
+    #   S E C T I O N   R E P O   #
+    ###############################
+
+    @staticmethod
+    def section_repo_action_init():
+        raw_yaml = ContextManager().raw_yaml
+        repo_build_dir = raw_yaml['CONFIGURATION']['REPO_BUILD_DIR']
 
 
+        os.makedirs(os.path.sep.join([repo_build_dir, 'conf']), exist_ok=True)
+        os.makedirs(os.path.sep.join([repo_build_dir, 'incoming']), exist_ok=True)
 
+        template = raw_yaml['CONFIGURATION']['REPO_DISTRIBUTIONS_TEMPLATE']
+
+        dst_full_filename = os.path.sep.join([repo_build_dir, 'conf', 'distributions'])
+        with open(dst_full_filename, 'w') as f:
+            f.write(template)
+
+    @staticmethod
+    def section_repo_action_includeall():
+        raw_yaml = ContextManager().raw_yaml
+        deb_build_dir = raw_yaml['CONFIGURATION']['DEB_BUILD_DIR']
+        repo_build_dir = raw_yaml['CONFIGURATION']['REPO_BUILD_DIR']
+        repo_codename = raw_yaml['CONFIGURATION']['REPO_CODENAME']
+
+        for entry in os.listdir(deb_build_dir):
+            deb_full_filename = os.path.sep.join([deb_build_dir, entry])
+            if not os.path.isfile(deb_full_filename) or not deb_full_filename.endswith('.deb'):
+                continue
+
+            cmd = ['reprepro', 'includedeb', repo_codename, deb_full_filename]
+            try:
+                msg = subprocess.check_output(cmd, cwd=repo_build_dir)
+            except subprocess.CalledProcessError:
+                pass
+            print_info(PIL.INFO, msg.decode('utf-8').rstrip('\n'))
+
+    @staticmethod
+    def section_repo_action_delete():
+        raw_yaml = ContextManager().raw_yaml
+        repo_build_dir = raw_yaml['CONFIGURATION']['REPO_BUILD_DIR']
+        if not os.path.isdir(repo_build_dir) or not os.path.exists(repo_build_dir):
+            print_info(PIL.ERROR, 'REPO_BUILD_DIR is no directory!')
+            exit(1)
+        shutil.rmtree(repo_build_dir)
 
 
