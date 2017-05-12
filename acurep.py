@@ -1,4 +1,4 @@
-#!virtenv_acuda_repomngr/bin/python
+#!venv_acuda_repomngr/bin/python
 # -*- coding: utf-8 -*-
 #
 # Author: Björn Eistel
