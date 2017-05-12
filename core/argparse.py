@@ -30,5 +30,8 @@ def get_arg_parser():
     repo_sub_parser.set_defaults(section='repo')
     repo_sub_parser.add_argument('action', choices=('init', 'includeall', 'delete'), help='TBD')
 
+    auto_sub_parser = sub_parser.add_parser('auto', help='TBD')
+    auto_sub_parser.set_defaults(section='auto')
+    auto_sub_parser.set_defaults(action='auto')
 
     return parser

@@ -128,12 +128,19 @@ class ParserExecute(object):
 
 
             for filepath in package['FILES']:
-                src_full_file_path = os.path.sep.join([rel_path, filepath])
+                src_full_file_path = os.path.sep.join([rel_path, filepath]) if len(rel_path) else filepath
+                src_full_file_path = src_full_file_path.replace('~', os.environ.get('HOME', '~'))
                 dst_full_file_path = os.path.sep.join([deb_build_dir, package_dir, filepath])
+                dst_full_file_path = dst_full_file_path.replace('~', os.environ.get('HOME', '~'))
 
 
-
-                if os.path.isfile(src_full_file_path):
+                if not os.path.exists(src_full_file_path):
+                    printf_info(PIL.ERROR,
+                                'file does not exist, skip package, remove target package directory\n\t(%s)',
+                                src_full_file_path)
+                    shutil.rmtree(dst_package_directory)
+                    break
+                elif os.path.isfile(src_full_file_path):
                     printf_info(PIL.VERBOSE,
                                 'copy file \n\tFrom -> %s\n\tTo   -> %s',
                                 src_full_file_path, dst_full_file_path)
@@ -223,5 +230,19 @@ class ParserExecute(object):
             print_info(PIL.ERROR, 'REPO_BUILD_DIR is no directory!')
             exit(1)
         shutil.rmtree(repo_build_dir)
+
+
+    ###############################
+    #   S E C T I O N   A U T O   #
+    ###############################
+
+    @staticmethod
+    def section_auto_action_auto():
+        #ParserExecute.section_deb_action_delete()
+        #ParserExecute.section_repo_action_delete()
+        ParserExecute.section_deb_action_copy()
+        ParserExecute.section_deb_action_build()
+        ParserExecute.section_repo_action_init()
+        ParserExecute.section_repo_action_includeall()
 
 

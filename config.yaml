@@ -63,3 +63,7 @@ PACKAGES:
   - usr/local/lib/libfreenect2.so.0.2
   - usr/local/lib/libfreenect2.so.0.2.0
   - usr/local/lib/pkgconfig/freenect2.pc
+- PACKAGE_NAME: acuda-ovr-test
+  PACKAGE_VERSION: 0.0.2
+  FILES:
+  - ~/REPO_TEST_FILE

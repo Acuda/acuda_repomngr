@@ -1,4 +1,4 @@
-#!/opt/acuda_repomngr/venv_acuda_repomngr/bin/python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # Author: Björn Eistel
