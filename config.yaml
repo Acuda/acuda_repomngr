@@ -1,0 +1,22 @@
+DEB_BUILD_DIR: ./data/deb_build_dir
+REPO_BUILD_DIR: ./data/rebo_build_dir
+MAINTAINER:
+- beistel: &beistel
+    Maintainer: Björn Eistel <eistel@gmail.com>
+    Package: acuda-${PACKAGE_NAME}
+    Version: ${PACKAGE_VERSION}
+    Architecture: amd64
+    Section: misc
+    Priority: optional
+    Depends: ${PACKAGE_DEPENDENCY}
+    Homepage: ${PACKAGE_HOMEPAGE}
+    Description: |
+      ${PACKAGE_DESCRIPTION}
+- default:
+    <<: *beistel
+PACKAGES:
+- PACKAGE_NAME: acurep
+  PACKAGE_VERSION: asd
+  FILES:
+  - asd
+  - def
