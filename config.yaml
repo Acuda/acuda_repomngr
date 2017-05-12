@@ -1,8 +1,26 @@
-DEB_BUILD_DIR: ./data/deb_build_dir
-REPO_BUILD_DIR: ./data/rebo_build_dir
+CONFIGURATION:
+  DEB_BUILD_DIR: /opt/acuda_repomngr/data/deb_build_dir
+  REPO_BUILD_DIR: /opt/acuda_repomngr/data/rebo_build_dir
+  DEB_CONTROL_TEMPLATE: |
+    Package: ${PACKAGE_NAME}
+    Version: ${PACKAGE_VERSION}
+    Section: ${PACKAGE_SECTION}
+    Priority: ${PACKAGE_SECTION}
+    Architecture: ${PACKAGE_ARCHITECTURE}
+    Depends: ${PACKAGE_DEPENDENCIES}
+    Maintainer: ${PACKAGE_MAINTAINER}Björn Eistel <eistel@gmail.com>
+    Homepage: https://github.com/OpenKinect/libfreenect2/
+    Description: Driver for Kinect One (v2)
+     This Package is a simple deb-Wrapper
+     Source-Code: https://github.com/OpenKinect/libfreenect2/
+  DEB_CONTROL_DEFAULTS:
+    PACKAGE_SECTION: misc
+    PACKAGE_PRIORITY: optional
+    PACKAGE_ARCHITECTURE: amd64
+    PACKAGE_DEPENDENCIES: ''
 MAINTAINER:
 - beistel: &beistel
-    Maintainer: Björn Eistel <eistel@gmail.com>
+    PACKAGE_MAINTAINER: Björn Eistel <eistel@gmail.com>
     Package: acuda-${PACKAGE_NAME}
     Version: ${PACKAGE_VERSION}
     Architecture: amd64
@@ -16,7 +34,29 @@ MAINTAINER:
     <<: *beistel
 PACKAGES:
 - PACKAGE_NAME: acurep
-  PACKAGE_VERSION: asd
+  PACKAGE_VERSION: 0.0.1
+  RELATIVE_TO: /home/beistel/ClionProjects/libfreenectsrc2deb/tmp/libfreenect2_0.2.0
   FILES:
-  - asd
-  - def
+  - usr/local/include/libfreenect2/config.h
+  - usr/local/include/libfreenect2/export.h
+  - usr/local/include/libfreenect2/frame_listener.hpp
+  - usr/local/include/libfreenect2/frame_listener_impl.h
+  - usr/local/include/libfreenect2/libfreenect2.hpp
+  - usr/local/include/libfreenect2/logger.h
+  - usr/local/include/libfreenect2/packet_pipeline.h
+  - usr/local/include/libfreenect2/registration.h
+  - usr/local/lib/cmake/freenect2/freenect2Config.cmake
+  - usr/local/lib/libfreenect2.so
+  - usr/local/lib/libfreenect2.so.0.2
+  - usr/local/lib/libfreenect2.so.0.2.0
+  - usr/local/lib/pkgconfig/freenect2.pc
+- PACKAGE_NAME: test
+  PACKAGE_VERSION: 0.0.1
+  RELATIVE_TO: /home/beistel/ClionProjects/libfreenectsrc2deb/tmp/libfreenect2_0.2.0
+  FILES:
+  - usr/local/include/libfreenect2
+  - usr/local/lib/cmake/freenect2/freenect2Config.cmake
+  - usr/local/lib/libfreenect2.so
+  - usr/local/lib/libfreenect2.so.0.2
+  - usr/local/lib/libfreenect2.so.0.2.0
+  - usr/local/lib/pkgconfig/freenect2.pc
