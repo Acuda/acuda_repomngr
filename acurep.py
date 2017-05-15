@@ -1,3 +1,4 @@
+#!/opt/acuda_repomngr/venv_acuda_repomngr/bin/python3
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #

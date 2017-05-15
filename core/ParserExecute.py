@@ -99,6 +99,8 @@ class ParserExecute(object):
         raw_yaml = ContextManager().raw_yaml
 
         deb_build_dir = raw_yaml['CONFIGURATION']['DEB_BUILD_DIR']
+        deb_build_dir = deb_build_dir.replace('~', os.environ.get('HOME', '~'))
+
         os.makedirs(deb_build_dir, exist_ok=True)
 
         if not 'PACKAGES' in raw_yaml:
@@ -107,7 +109,8 @@ class ParserExecute(object):
 
 
         for package in raw_yaml['PACKAGES']:
-            rel_path = package.get('RELATIVE_TO', '')
+            src_rel_path = package.get('SRC_RELATIVE_TO', '')
+            dst_rel_path = package.get('DST_RELATIVE_TO', '')
 
             package_name = package['PACKAGE_NAME']
             package_version = package['PACKAGE_VERSION']
@@ -127,10 +130,10 @@ class ParserExecute(object):
             ParserExecute._write_deb_control(package, dst_package_control_filename)
 
 
-            for filepath in package['FILES']:
-                src_full_file_path = os.path.sep.join([rel_path, filepath]) if len(rel_path) else filepath
+            for filepath in package.get('FILES', list()):
+                src_full_file_path = os.path.sep.join([src_rel_path, filepath]) if len(src_rel_path) else filepath
                 src_full_file_path = src_full_file_path.replace('~', os.environ.get('HOME', '~'))
-                dst_full_file_path = os.path.sep.join([deb_build_dir, package_dir, filepath])
+                dst_full_file_path = os.path.sep.join([deb_build_dir, package_dir, dst_rel_path, filepath])
                 dst_full_file_path = dst_full_file_path.replace('~', os.environ.get('HOME', '~'))
 
 
@@ -158,10 +161,24 @@ class ParserExecute(object):
                     print_info(PIL.ERROR, 'unknown file type for filename: %s' % src_full_file_path)
                     exit(1)
 
+            for link in package.get('LINKS', list()):
+                full_pkg_filepath = os.path.sep.join([deb_build_dir, package_dir])
+                link_target = link['TARGET']
+                link_name = link['NAME']
+
+                full_target_linkfilename = os.sep.join([full_pkg_filepath, link_name])
+                os.makedirs(os.path.dirname(full_target_linkfilename), exist_ok=True)
+                cmd = ['ln', '-s', link_target, full_target_linkfilename]
+
+                msg = subprocess.check_output(cmd, cwd=full_pkg_filepath)
+                print_info(PIL.INFO, msg.decode('utf-8').rstrip('\n'))
+                print(cmd)
+
     @staticmethod
     def section_deb_action_build():
         raw_yaml = ContextManager().raw_yaml
         deb_build_dir = raw_yaml['CONFIGURATION']['DEB_BUILD_DIR']
+        deb_build_dir = deb_build_dir.replace('~', os.environ.get('HOME', '~'))
         for entry in os.listdir(deb_build_dir):
             full_filename = os.path.sep.join([deb_build_dir, entry])
             if not os.path.isdir(full_filename) \
@@ -170,6 +187,7 @@ class ParserExecute(object):
                 continue
 
             cmd = ['fakeroot', 'dpkg-deb', '--build', entry]
+            #cmd = ['dpkg-deb', '--build', entry]
             msg = subprocess.check_output(cmd, cwd=deb_build_dir)
             print_info(PIL.INFO, msg.decode('utf-8').rstrip('\n'))
 
@@ -178,6 +196,7 @@ class ParserExecute(object):
     def section_deb_action_delete():
         raw_yaml = ContextManager().raw_yaml
         deb_build_dir = raw_yaml['CONFIGURATION']['DEB_BUILD_DIR']
+        deb_build_dir = deb_build_dir.replace('~', os.environ.get('HOME', '~'))
         if not os.path.isdir(deb_build_dir) or not os.path.exists(deb_build_dir):
             print_info(PIL.ERROR, 'DEB_BUILD_DIR is no directory!')
             exit(1)
@@ -192,6 +211,7 @@ class ParserExecute(object):
     def section_repo_action_init():
         raw_yaml = ContextManager().raw_yaml
         repo_build_dir = raw_yaml['CONFIGURATION']['REPO_BUILD_DIR']
+        repo_build_dir = repo_build_dir.replace('~', os.environ.get('HOME', '~'))
 
 
         os.makedirs(os.path.sep.join([repo_build_dir, 'conf']), exist_ok=True)
@@ -207,7 +227,9 @@ class ParserExecute(object):
     def section_repo_action_includeall():
         raw_yaml = ContextManager().raw_yaml
         deb_build_dir = raw_yaml['CONFIGURATION']['DEB_BUILD_DIR']
+        deb_build_dir = deb_build_dir.replace('~', os.environ.get('HOME', '~'))
         repo_build_dir = raw_yaml['CONFIGURATION']['REPO_BUILD_DIR']
+        repo_build_dir = repo_build_dir.replace('~', os.environ.get('HOME', '~'))
         repo_codename = raw_yaml['CONFIGURATION']['REPO_CODENAME']
 
         for entry in os.listdir(deb_build_dir):
@@ -226,6 +248,7 @@ class ParserExecute(object):
     def section_repo_action_delete():
         raw_yaml = ContextManager().raw_yaml
         repo_build_dir = raw_yaml['CONFIGURATION']['REPO_BUILD_DIR']
+        repo_build_dir = repo_build_dir.replace('~', os.environ.get('HOME', '~'))
         if not os.path.isdir(repo_build_dir) or not os.path.exists(repo_build_dir):
             print_info(PIL.ERROR, 'REPO_BUILD_DIR is no directory!')
             exit(1)
@@ -244,5 +267,29 @@ class ParserExecute(object):
         ParserExecute.section_deb_action_build()
         ParserExecute.section_repo_action_init()
         ParserExecute.section_repo_action_includeall()
+
+    ###########################################
+    #   S E C T I O N   A P T - C O N F I G   #
+    ###########################################
+
+    @staticmethod
+    def section_aptgen_action_local():
+        raw_yaml = ContextManager().raw_yaml
+        template = raw_yaml['CONFIGURATION']['APT_LOCAL_TEMPLATE']
+        replacement = dict()
+        replacement.update(raw_yaml['CONFIGURATION'])
+
+        for key, value in replacement.items():
+            placeholder = '${%s}' % key
+            if placeholder in template:
+                template = template.replace(placeholder, value)
+
+        template = template.replace('~', os.environ.get('HOME', '~'))
+        print(template)
+
+        filename = '/etc/apt/sources.list.d/acurep-local.list'
+        with open(filename, 'w') as f:
+            f.write(template)
+
 
 

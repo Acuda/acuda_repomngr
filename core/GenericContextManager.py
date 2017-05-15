@@ -11,9 +11,7 @@
 
 class ContextManager(object):
     """Prepare Application-Context and give the ability to access the Context trough
-    normal initialisation for a given Pseudo-Namespace. The ContextManager provides
-    the Plugins-, Configuration- and DataLink-Controller as well as the
-    ProcessManager. """
+    normal initialisation for a given Pseudo-Namespace."""
 
     class Section(object):
         def __init__(self, parent):

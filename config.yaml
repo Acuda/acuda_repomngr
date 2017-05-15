@@ -1,5 +1,5 @@
 CONFIGURATION:
-  DEB_BUILD_DIR: /opt/acuda_repomngr/data/deb_build_dir
+  DEB_BUILD_DIR: ~/acuda_repomngr_data/deb_build_dir
   DEB_CONTROL_TEMPLATE: |
     Package: ${PACKAGE_NAME}
     Version: ${PACKAGE_VERSION}
@@ -17,7 +17,7 @@ CONFIGURATION:
     PACKAGE_DEPENDENCIES: ''
     PACKAGE_HOMEPAGE: ''
     PACKAGE_DESCRIPTION: ''
-  REPO_BUILD_DIR: /opt/acuda_repomngr/data/rebo_build_dir
+  REPO_BUILD_DIR: ~/acuda_repomngr_data/rebo_build_dir
   REPO_DISTRIBUTIONS_TEMPLATE: |
     Origin: Acuda
     Label: Acuda Github
@@ -27,43 +27,36 @@ CONFIGURATION:
     Components: main
     Description: TBD
   REPO_CODENAME: xenial
+  APT_LOCAL_TEMPLATE: |
+    deb file://${REPO_BUILD_DIR}/ ${REPO_CODENAME} main
 MAINTAINER:
  beistel: &beistel
   PACKAGE_MAINTAINER: Björn Eistel <eistel@gmail.com>
  default:
     <<: *beistel
- alf: &alf
-  PACKAGE_MAINTAINER: Gordon Shumway <gordon.shumway@melmac.glxy>
 PACKAGES:
 - PACKAGE_NAME: acurep
   PACKAGE_VERSION: 0.0.1
-  RELATIVE_TO: /home/beistel/ClionProjects/libfreenectsrc2deb/tmp/libfreenect2_0.2.0
+  SRC_RELATIVE_TO: /home/beistel/PycharmProjects
+  DST_RELATIVE_TO: /opt
   FILES:
-  - usr/local/include/libfreenect2/config.h
-  - usr/local/include/libfreenect2/export.h
-  - usr/local/include/libfreenect2/frame_listener.hpp
-  - usr/local/include/libfreenect2/frame_listener_impl.h
-  - usr/local/include/libfreenect2/libfreenect2.hpp
-  - usr/local/include/libfreenect2/logger.h
-  - usr/local/include/libfreenect2/packet_pipeline.h
-  - usr/local/include/libfreenect2/registration.h
-  - usr/local/lib/cmake/freenect2/freenect2Config.cmake
-  - usr/local/lib/libfreenect2.so
-  - usr/local/lib/libfreenect2.so.0.2
-  - usr/local/lib/libfreenect2.so.0.2.0
-  - usr/local/lib/pkgconfig/freenect2.pc
-- <<: *alf
-  PACKAGE_NAME: test
+  - acuda_repomngr
+  LINKS:
+  - TARGET: /opt/acuda_repomngr/acurep.py
+    NAME: /usr/local/bin/acurep
+- PACKAGE_NAME: acuda-i3-config
   PACKAGE_VERSION: 0.0.1
-  RELATIVE_TO: /home/beistel/ClionProjects/libfreenectsrc2deb/tmp/libfreenect2_0.2.0
+  SRC_RELATIVE_TO: ~/
+  DST_RELATIVE_TO: /opt/acuda/config/
   FILES:
-  - usr/local/include/libfreenect2
-  - usr/local/lib/cmake/freenect2/freenect2Config.cmake
-  - usr/local/lib/libfreenect2.so
-  - usr/local/lib/libfreenect2.so.0.2
-  - usr/local/lib/libfreenect2.so.0.2.0
-  - usr/local/lib/pkgconfig/freenect2.pc
-- PACKAGE_NAME: acuda-ovr-test
-  PACKAGE_VERSION: 0.0.2
+  - .i3/config
+- PACKAGE_NAME: acuda-scripts
+  PACKAGE_VERSION: 0.0.1
+  PACKAGE_DEPENDENCIES: acuda-dmenu-system-exit
+- PACKAGE_NAME: acuda-dmenu-system-exit
+  PACKAGE_VERSION: 0.0.1
+  SRC_RELATIVE_TO: ~/installed/system
+  DST_RELATIVE_TO: /opt/acuda/scripts
   FILES:
-  - ~/REPO_TEST_FILE
+  - dmenu_system_exit.sh
+

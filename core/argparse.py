@@ -13,8 +13,8 @@ import argparse
 def get_arg_parser():
     parser = argparse.ArgumentParser(conflict_handler='resolve')
     parser.add_argument('--cfile', default='/opt/acuda_repomngr/config.yaml', help='configuration file')
-    parser.add_argument('-v', action="store_true", default=False, dest='verbose')
-    parser.add_argument('--verbose', action="store_true", default=False, dest='verbose')
+    parser.add_argument('-v', action="store_true", default=False, dest='verbose', help="verbose output")
+    parser.add_argument('--verbose', action="store_true", default=False, dest='verbose', help="verbose output")
 
     sub_parser = parser.add_subparsers(help='section')
 
@@ -29,6 +29,10 @@ def get_arg_parser():
     repo_sub_parser = sub_parser.add_parser('repo', help='TBD')
     repo_sub_parser.set_defaults(section='repo')
     repo_sub_parser.add_argument('action', choices=('init', 'includeall', 'delete'), help='TBD')
+
+    apt_sub_parser = sub_parser.add_parser('aptgen', help='generate apt configuration (/etc/apt/sources.lost.d/)')
+    apt_sub_parser.set_defaults(section='aptgen')
+    apt_sub_parser.add_argument('action', choices=('local',), help='TBD')
 
     auto_sub_parser = sub_parser.add_parser('auto', help='TBD')
     auto_sub_parser.set_defaults(section='auto')
