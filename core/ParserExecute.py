@@ -70,8 +70,13 @@ class ParserExecute(object):
         import pprint
         pprint.pprint(ContextManager().argparse_result)
 
+    @staticmethod
+    def section_dev_action_cpconfig():
+        devfilename = '~/PycharmProjects/acuda_repomngr/config.yaml'.replace('~', os.environ.get('HOME', '~'))
+        shutil.copy2(devfilename, ContextManager().argparse_result.cfile, follow_symlinks=False)
 
-    #############################
+
+    #############################ß
     #   S E C T I O N   D E B   #
     #############################
 
@@ -149,8 +154,14 @@ class ParserExecute(object):
                                 src_full_file_path, dst_full_file_path)
 
                     os.makedirs(os.path.dirname(dst_full_file_path), exist_ok=True)
-                    shutil.copyfile(src_full_file_path, dst_full_file_path, follow_symlinks=False)
-
+                    try:
+                        shutil.copy2(src_full_file_path, dst_full_file_path, follow_symlinks=False)
+                    except PermissionError as ex:
+                        printf_info(PIL.ERROR,
+                                    'Permission denied: \n\t(%s)',
+                                    src_full_file_path)
+                        shutil.rmtree(dst_package_directory)
+                        break
                 elif os.path.isdir(src_full_file_path):
                     printf_info(PIL.VERBOSE,
                                 'copy directory \n\tFrom -> %s\n\tTo   -> %s',
@@ -199,7 +210,7 @@ class ParserExecute(object):
         deb_build_dir = deb_build_dir.replace('~', os.environ.get('HOME', '~'))
         if not os.path.isdir(deb_build_dir) or not os.path.exists(deb_build_dir):
             print_info(PIL.ERROR, 'DEB_BUILD_DIR is no directory!')
-            exit(1)
+            return
         shutil.rmtree(deb_build_dir)
 
 
@@ -251,7 +262,7 @@ class ParserExecute(object):
         repo_build_dir = repo_build_dir.replace('~', os.environ.get('HOME', '~'))
         if not os.path.isdir(repo_build_dir) or not os.path.exists(repo_build_dir):
             print_info(PIL.ERROR, 'REPO_BUILD_DIR is no directory!')
-            exit(1)
+            return
         shutil.rmtree(repo_build_dir)
 
 
@@ -261,8 +272,8 @@ class ParserExecute(object):
 
     @staticmethod
     def section_auto_action_auto():
-        #ParserExecute.section_deb_action_delete()
-        #ParserExecute.section_repo_action_delete()
+        ParserExecute.section_deb_action_delete()
+        ParserExecute.section_repo_action_delete()
         ParserExecute.section_deb_action_copy()
         ParserExecute.section_deb_action_build()
         ParserExecute.section_repo_action_init()

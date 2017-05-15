@@ -20,7 +20,7 @@ def get_arg_parser():
 
     dev_sub_parser = sub_parser.add_parser('dev', help='TBD')
     dev_sub_parser.set_defaults(section='dev')
-    dev_sub_parser.add_argument('action', choices=('config', 'args'), help='TBD')
+    dev_sub_parser.add_argument('action', choices=('config', 'args', 'cpconfig', 'reinstall'), help='TBD')
 
     deb_sub_parser = sub_parser.add_parser('deb', help='TBD')
     deb_sub_parser.set_defaults(section='deb')

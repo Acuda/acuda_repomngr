@@ -59,4 +59,10 @@ PACKAGES:
   DST_RELATIVE_TO: /opt/acuda/scripts
   FILES:
   - dmenu_system_exit.sh
-
+- PACKAGE_NAME: acuda-hhn-ros
+  PACKAGE_VERSION: 0.0.1
+  PACKAGE_DEPENDENCIES: ros-kinetic-desktop-full
+- PACKAGE_NAME: acuda-hhn-ws-systemconnection-hhn
+  PACKAGE_VERSION: 0.0.1
+  FILES:
+  - /etc/NetworkManager/system-connections/HHN

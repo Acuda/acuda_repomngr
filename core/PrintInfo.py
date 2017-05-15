@@ -10,6 +10,7 @@
 
 import traceback
 from enum import IntEnum
+import sys
 
 from core.GenericContextManager import ContextManager
 
@@ -70,7 +71,11 @@ def print_info(*args, **kwargs):
 
     #ContextManager(section='gui').send_signal('print_info(QString)', s)
     #ContextManager(section='gui')._info.append(s)
-    if doPrint: print(s)
+    if doPrint:
+        if loglevel == PIL.ERROR:
+            print(s, file=sys.stderr, flush=True)
+        else:
+            print(s, flush=True)
 
 
 def print_exception(ex):
