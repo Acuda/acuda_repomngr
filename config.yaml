@@ -32,7 +32,7 @@ CONFIGURATION:
 MAINTAINER:
  beistel: &beistel
   PACKAGE_MAINTAINER: Björn Eistel <eistel@gmail.com>
- default:
+ DEFAULT:
     <<: *beistel
 PACKAGES:
 - PACKAGE_NAME: acurep
