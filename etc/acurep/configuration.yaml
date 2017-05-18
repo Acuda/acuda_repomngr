@@ -1,0 +1,5 @@
+CONFIGURATION:
+  CONFIGURATION_D_DIR: ~/PycharmProjects/acuda_repomngr/etc/acurep/configuration.d
+  MAINTAINER_D_DIR:
+  PACKAGE_D_DIR: ~/PycharmProjects/acuda_repomngr/etc/acurep/packages.d
+PACKAGES: []

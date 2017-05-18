@@ -34,35 +34,3 @@ MAINTAINER:
   PACKAGE_MAINTAINER: Björn Eistel <eistel@gmail.com>
  DEFAULT:
     <<: *beistel
-PACKAGES:
-- PACKAGE_NAME: acurep
-  PACKAGE_VERSION: 0.0.1
-  SRC_RELATIVE_TO: /home/beistel/PycharmProjects
-  DST_RELATIVE_TO: /opt
-  FILES:
-  - acuda_repomngr
-  LINKS:
-  - TARGET: /opt/acuda_repomngr/acurep.py
-    NAME: /usr/local/bin/acurep
-- PACKAGE_NAME: acuda-i3-config
-  PACKAGE_VERSION: 0.0.1
-  SRC_RELATIVE_TO: ~/
-  DST_RELATIVE_TO: /opt/acuda/config/
-  FILES:
-  - .i3/config
-- PACKAGE_NAME: acuda-scripts
-  PACKAGE_VERSION: 0.0.1
-  PACKAGE_DEPENDENCIES: acuda-dmenu-system-exit
-- PACKAGE_NAME: acuda-dmenu-system-exit
-  PACKAGE_VERSION: 0.0.1
-  SRC_RELATIVE_TO: ~/installed/system
-  DST_RELATIVE_TO: /opt/acuda/scripts
-  FILES:
-  - dmenu_system_exit.sh
-- PACKAGE_NAME: acuda-hhn-ros
-  PACKAGE_VERSION: 0.0.1
-  PACKAGE_DEPENDENCIES: ros-kinetic-desktop-full
-- PACKAGE_NAME: acuda-hhn-ws-systemconnection-hhn
-  PACKAGE_VERSION: 0.0.1
-  FILES:
-  - /etc/NetworkManager/system-connections/HHN

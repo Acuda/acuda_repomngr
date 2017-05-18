@@ -3,8 +3,6 @@ PACKAGES:
   PACKAGE_VERSION: 0.0.1
   SRC_RELATIVE_TO: /home/beistel/PycharmProjects
   DST_RELATIVE_TO: /opt
-  FILES:
-  - acuda_repomngr
   LINKS:
   - TARGET: /opt/acuda_repomngr/acurep.py
     NAME: /usr/local/bin/acurep

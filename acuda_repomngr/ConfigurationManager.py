@@ -12,18 +12,47 @@ import yaml
 import os
 
 from pprint import pprint
+from acuda_repomngr.PrintInfo import *
+
+class FileName(object):
+
+    def __init__(self, filename, basepath=None):
+        self._filename = filename
+        self._basepath = basepath
+
+    @property
+    def filename(self):
+        return FileName.fix(self._filename)
+
+    @property
+    def fullfilename(self):
+        ffn = os.path.sep.join([self._basepath, self._filename]) if not self._basepath is None else self._filename
+        return FileName.fix(ffn)
+
+    @staticmethod
+    def fix(filename):
+        filename = FileName.replace_special_chars(filename)
+        return filename
+
+    @staticmethod
+    def replace_special_chars(filename):
+        filename = os.path.expanduser(filename)
+        filename = os.path.expandvars(filename)
+        filename = os.path.normpath(filename)
+        return filename
+
 
 class PdoBase(object):
     BASENAME = None
 
     def __init__(self):
-        if not hasattr(self, 'raw_data'):
-            self.raw_data = dict()
+        if not hasattr(self, '_raw_data'):
+            self._raw_data = dict()
 
     def update(self, src_dict, tgt_dict=None):
         assert isinstance(src_dict, dict)
         if tgt_dict is None:
-            tgt_dict = self.raw_data
+            tgt_dict = self._raw_data
 
         for key, value in src_dict.items():
             if isinstance(value, dict):
@@ -40,9 +69,11 @@ class PdoBase(object):
 
     @property
     def _data(self):
-        #print(self.BASENAME, self.raw_data)
-        return self.raw_data[self.BASENAME]
+        return self._raw_data[self.BASENAME]
 
+    @property
+    def _data_available(self):
+        return self.BASENAME in self._raw_data
 
 
 class ConfigurationPdo(PdoBase):
@@ -55,8 +86,20 @@ class ConfigurationPdo(PdoBase):
             self.__dict__ = other.__dict__.copy()
 
     @property
+    def CONFIGURATION_D_DIR(self):
+        return FileName.fix(self._data['CONFIGURATION_D_DIR'])
+
+    @property
+    def MAINTAINER_D_DIR(self):
+        return FileName.fix(self._data['MAINTAINER_D_DIR'])
+
+    @property
+    def PACKAGE_D_DIR(self):
+        return FileName.fix(self._data['PACKAGE_D_DIR'])
+
+    @property
     def DEB_BUILD_DIR(self):
-        return self._data['DEB_BUILD_DIR']
+        return FileName.fix(self._data['DEB_BUILD_DIR'])
 
     @property
     def DEB_CONTROL_TEMPLATE(self):
@@ -64,11 +107,11 @@ class ConfigurationPdo(PdoBase):
 
     @property
     def DEB_CONTROL_DEFAULTS(self):
-        return self._data['DEB_CONTROL_DEFAULTS']
+        return self._data.get('DEB_CONTROL_DEFAULTS', dict())
 
     @property
     def REPO_BUILD_DIR(self):
-        return self._data['REPO_BUILD_DIR']
+        return FileName.fix(self._data['REPO_BUILD_DIR'])
 
     @property
     def REPO_DISTRIBUTIONS_TEMPLATE(self):
@@ -94,7 +137,7 @@ class MaintainerPdo(PdoBase):
 
     @property
     def DEFAULT(self):
-        return self._data['DEFAULT']
+        return self._data.get('DEFAULT', dict())
 
 
 class PackagesPdo(PdoBase):
@@ -114,15 +157,23 @@ class PackagesPdo(PdoBase):
 
     def _create_updated_package_entry_dict(self, package_data_dict):
         package_dict_updated = dict()
-        package_dict_updated.update(ConfigurationPdo(self).DEB_CONTROL_DEFAULTS)
-        package_dict_updated.update(MaintainerPdo(self).DEFAULT)
+
+        if ConfigurationPdo(self)._data_available:
+            package_dict_updated.update(ConfigurationPdo(self).DEB_CONTROL_DEFAULTS)
+
+        if MaintainerPdo(self)._data_available:
+            package_dict_updated.update(MaintainerPdo(self).DEFAULT)
+
         package_dict_updated.update(package_data_dict)
+
         return package_dict_updated
 
     def __len__(self):
         return len(self._data)
 
     def remove_multiple_entries(self):
+        #if not self._data_available:
+        #    return
         seen = set()
         numPackages = len(self) - 1
         seen_twice = [(x, numPackages - idx) for idx, x in enumerate(self[::-1]) if x.identifier in seen or seen.add(x.identifier)]
@@ -152,8 +203,46 @@ class PackageEntry(object):
     def version(self):
         return self.package_dict['PACKAGE_VERSION']
 
+    @property
+    def src_relative_to(self):
+        return FileName.fix(self.package_dict.get('SRC_RELATIVE_TO', '/'))
+
+    @property
+    def dst_relative_to(self):
+        return FileName.fix(self.package_dict.get('DST_RELATIVE_TO', '/'))
+
+    @property
+    def files(self):
+        return self.package_dict.get('FILES', list())
+
+    @property
+    def src_files(self):
+        src_files = [FileName(filename=f, basepath=self.src_relative_to).fullfilename for f in self.files]
+        return src_files
+
+    @property
+    def dst_files(self):
+        dst_files = [FileName(filename=f, basepath=self.dst_relative_to).fullfilename for f in self.files]
+        return dst_files
+
     def __eq__(self, other):
         return self.identifier == other.identifier
+
+    def check(self):
+        existing = read_access = False
+        for filename in self.src_files:
+            cps = ColorPrinter().cfg('g')
+            cpf = ColorPrinter().cfg('r', st='b')
+            existing = os.path.exists(filename)
+            read_access = os.access(filename, os.R_OK)
+
+            print_info(
+                PIL.VERBOSE, filename,
+                cps.fmt('(found)') if existing else cpf.fmt('(not found)'),
+                cps.fmt('(readable)') if read_access else cpf.fmt('(not readable)'),
+                indent=2
+            )
+        return existing and read_access
 
 class ConfigurationManager(object):
     def __init__(self):
@@ -175,20 +264,34 @@ class ConfigurationManager(object):
 
     def load_configuration_directory(self, filename):
         conffile = os.listdir(filename)
+        conffile.sort()
         for cfile in conffile:
             ffn = os.sep.join([filename, cfile])
             self.load_configuration_file(ffn)
 
+    def load_additional_configuration(self):
 
+        self.load_configuration_directory(self.configuration.CONFIGURATION_D_DIR)
+        self.load_configuration_directory(self.configuration.PACKAGE_D_DIR)
 
 if __name__ == '__main__':
     cm = ConfigurationManager()
     cm.load_configuration_file('/home/beistel/PycharmProjects/acuda_repomngr/config.yaml')
-    cm.load_configuration_directory('/home/beistel/PycharmProjects/acuda_repomngr/etc/packages.d')
+    cm.load_configuration_file('/home/beistel/PycharmProjects/acuda_repomngr/etc/acurep/packages.yaml')
+    cm.load_configuration_directory('/home/beistel/PycharmProjects/acuda_repomngr/etc/acurep/packages.d')
+    cm.load_configuration_directory('/home/beistel/PycharmProjects/acuda_repomngr/etc/acurep/configuration.d')
 
-    #print('###', cm.configuration.raw_data.keys())
-    #print('###', PackagesPdo(cm.configuration).raw_data.keys())
+    #print('###', cm.configuration._raw_data.keys())
+    #print('###', PackagesPdo(cm.configuration)._raw_data.keys())
 
-    pprint([x.identifier for x in cm.packages])
+    fmt = '{:.<20}: {}'
+    for x in cm.packages:
+        print(x.identifier)
+        print(fmt.format('src_relative_to', x.src_relative_to))
+        print(fmt.format('dst_relative_to', x.dst_relative_to))
+        print(x.files)
+        print(x.src_files)
+        print(x.dst_files)
+        print('---')
 
 
