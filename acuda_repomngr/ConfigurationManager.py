@@ -126,8 +126,20 @@ class ConfigurationPdo(PdoBase):
         return self._data['REPO_CODENAME']
 
     @property
+    def APT_LOCAL_NAME(self):
+        return self._data['APT_LOCAL_NAME']
+
+    @property
     def APT_LOCAL_TEMPLATE(self):
         return self._data['APT_LOCAL_TEMPLATE']
+
+    @property
+    def APT_GITHUB_NAME(self):
+        return self._data['APT_GITHUB_NAME']
+
+    @property
+    def APT_GITHUB_TEMPLATE(self):
+        return self._data['APT_GITHUB_TEMPLATE']
 
 
 class MaintainerPdo(PdoBase):
@@ -229,6 +241,11 @@ class PackageEntry(object):
         dst_files = [FileName(filename=f, basepath=self.dst_relative_to).fullfilename for f in self.files]
         return dst_files
 
+    @property
+    def links(self):
+        links = [LinkEntry(link_dict) for link_dict in self.package_dict.get('LINKS', list())]
+        return links
+
     def __eq__(self, other):
         return self.identifier == other.identifier
 
@@ -262,6 +279,19 @@ class PackageEntry(object):
                 indent=2
             )
         return existing and read_access and filetype != 'unknown'
+
+
+class LinkEntry(object):
+    def __init__(self, link_dict):
+        self.link_dict = link_dict
+
+    @property
+    def TARGET(self):
+        return self.link_dict['TARGET']
+
+    @property
+    def NAME(self):
+        return self.link_dict['NAME']
 
 class ConfigurationManager(object):
     def __init__(self):

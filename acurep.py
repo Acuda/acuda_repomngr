@@ -42,7 +42,7 @@ def get_arg_parser():
 
     apt_sub_parser = sub_parser.add_parser('aptgen', help='generate apt configuration (/etc/apt/sources.lost.d/)')
     apt_sub_parser.set_defaults(section='aptgen')
-    apt_sub_parser.add_argument('action', choices=('local',), help='TBD')
+    apt_sub_parser.add_argument('action', choices=('local', 'github'), help='TBD')
 
     auto_sub_parser = sub_parser.add_parser('auto', help='TBD')
     auto_sub_parser.set_defaults(section='auto')
@@ -55,17 +55,6 @@ def main():
     parser = get_arg_parser()
     argparse_result = parser.parse_args(sys.argv[1:])
     ParserExecute.execute(parser, argparse_result)
-
-    #parser = argparse.get_arg_parser()
-    #argparse_result = parser.parse_args(sys.argv[1:])
-    #ParserExecute.execute(parser, argparse_result)
-
-
-    #cprint.rst().out('Bye now...')
-
-
-
-
 
 
 if __name__ == '__main__':

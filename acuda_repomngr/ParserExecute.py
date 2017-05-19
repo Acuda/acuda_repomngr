@@ -146,22 +146,26 @@ class ParserExecute(object):
             print_info(ColorPrinter().cfg(st='b').fmt(package.identifier))
             package_directory = FileName(filename=package.identifier, basepath=cm.configuration.DEB_BUILD_DIR).fullfilename
 
+            # self check on package
             print_info(PIL.VERBOSE, 'performing self check ...', indent=1)
             if not package.check():
                 printf_info(PIL.WARN, 'self check failed, package skipped', indent=1)
                 continue
 
+            # remove existing package directory
             if os.path.exists(package_directory) and os.path.isdir(package_directory):
                 printf_info(PIL.VERBOSE, 'directory for package %s already exists, removing:', package.identifier, indent=1)
                 printf_info(PIL.VERBOSE, '-> %s', package_directory, indent=2)
                 shutil.rmtree(package_directory)
 
+            # write package control file
             template_content = ParserExecute._parse_tampleate(cm.configuration.DEB_CONTROL_TEMPLATE, package.package_dict)
             package_control_filename = os.path.sep.join([package_directory, 'DEBIAN', 'control'])
             os.makedirs(os.path.dirname(package_control_filename), exist_ok=True)
             with open(package_control_filename, 'w') as f:
                 f.write(template_content)
 
+            # copy package content
             full_dst_filename = [FileName(filename=dstf, basepath=package_directory).fullfilename for dstf in package.dst_files]
             full_src_dst_filename_list = zip(package.src_files, full_dst_filename)
             for src, dst in full_src_dst_filename_list:
@@ -178,6 +182,25 @@ class ParserExecute(object):
                     shutil.copytree(src, dst, symlinks=True)
                 else:
                     printf_info(PIL.ERROR, 'unknown file type for filename: %s', src, indent=2)
+
+            # create package links
+            for link in package.links:
+                pkg_dst = FileName(filename=link.NAME, basepath=package_directory).fullfilename
+                link_tgt = FileName(filename=link.TARGET).fullfilename
+                os.makedirs(os.path.dirname(pkg_dst), exist_ok=True)
+
+                print_info(PIL.VERBOSE, 'create link in package:', indent=2)
+                printf_info(PIL.VERBOSE, 'target: %s', link_tgt, indent=3)
+                printf_info(PIL.VERBOSE, '  name: %s', link.NAME, indent=3)
+                printf_info(PIL.VERBOSE, '    in: %s', package_directory, indent=3)
+
+                cmd = ['ln', '-s']
+                cmd.append(link_tgt)
+                cmd.append(pkg_dst)
+                msg = subprocess.check_output(cmd, cwd=package_directory)
+                if msg:
+                    print_info(PIL.INFO, msg.decode('utf-8').rstrip('\n'))
+
 
 
     @staticmethod
@@ -335,8 +358,29 @@ class ParserExecute(object):
         cm = ContextManager().cm
         assert(isinstance(cm, ConfigurationManager))
 
-        template_content = ParserExecute._parse_tampleate(cm.configuration.APT_LOCAL_TEMPLATE, cm.configuration._data)
-        apt_local_filename = '/etc/apt/sources.list.d/acurep-local.list'
+        ParserExecute._write_apt_template(cm.configuration.APT_LOCAL_TEMPLATE, cm.configuration.APT_LOCAL_NAME)
+
+        print_info('done')
+
+    @staticmethod
+    def section_aptgen_action_github():
+        ParserExecute._print_step_info(sys._getframe().f_code.co_name)
+
+        cm = ContextManager().cm
+        assert(isinstance(cm, ConfigurationManager))
+
+        ParserExecute._write_apt_template(cm.configuration.APT_GITHUB_TEMPLATE, cm.configuration.APT_GITHUB_NAME)
+
+        print_info('done')
+
+
+    @staticmethod
+    def _write_apt_template(unparsed_template, apt_name):
+        cm = ContextManager().cm
+        assert(isinstance(cm, ConfigurationManager))
+
+        template_content = ParserExecute._parse_tampleate(unparsed_template, cm.configuration._data)
+        apt_local_filename = FileName(filename=apt_name, basepath='/etc/apt/sources.list.d').fullfilename
 
         if not os.access(os.path.dirname(apt_local_filename), os.W_OK):
             printf_info(PIL.ERROR, 'insufficient permissions, file "%s" not writable', apt_local_filename)
@@ -344,5 +388,3 @@ class ParserExecute(object):
 
         with open(apt_local_filename, 'w') as f:
             f.write(template_content)
-
-        print_info('done')

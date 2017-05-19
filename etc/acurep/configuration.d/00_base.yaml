@@ -28,8 +28,14 @@ CONFIGURATION:
     Components: main
     Description: TBD
   REPO_CODENAME: xenial
+  APT_LOCAL_NAME: acurep-local.list
   APT_LOCAL_TEMPLATE: |
     deb file://${REPO_BUILD_DIR}/ ${REPO_CODENAME} main
+  GITHUB_USER: acuda
+  GITHUB_REPO: acurep_aptrepo
+  APT_GITHUB_NAME: acurep-github.list
+  APT_GITHUB_TEMPLATE: |
+    deb https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/master ${REPO_CODENAME} main
 MAINTAINER:
  beistel: &beistel
   PACKAGE_MAINTAINER: Björn Eistel <eistel@gmail.com>
