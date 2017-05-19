@@ -1,5 +1,6 @@
 CONFIGURATION:
   DEB_BUILD_DIR: ~/acuda_repomngr_data/deb_build_dir
+  DEB_BUILD_COMMAND: fakeroot dpkg-deb --build
   DEB_CONTROL_TEMPLATE: |
     Package: ${PACKAGE_NAME}
     Version: ${PACKAGE_VERSION}

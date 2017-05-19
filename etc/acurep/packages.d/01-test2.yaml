@@ -4,17 +4,21 @@ PACKAGES:
   SRC_RELATIVE_TO: /home/beistel/PycharmProjects
   DST_RELATIVE_TO: /opt
   FILES:
-  - acuda_repomngr
+  - acuda_repomngr/acuda_repomngr
+  - acuda_repomngr/etc
+  - acuda_repomngr/venv_acuda_repomngr
+  - acuda_repomngr/acurep.py
   LINKS:
   - TARGET: /opt/acuda_repomngr/acurep.py
     NAME: /usr/local/bin/acurep
+  - TARGET: /opt/acuda_repomngr/etc/acurep
+    NAME: /etc/acurep
 - PACKAGE_NAME: acuda-i3-config
   PACKAGE_VERSION: 0.0.1
   SRC_RELATIVE_TO: ~/
   DST_RELATIVE_TO: /opt/acuda/config/
   FILES:
   - .i3/config
-  - .i3/config2
 - PACKAGE_NAME: acuda-scripts
   PACKAGE_VERSION: 0.0.1
   PACKAGE_DEPENDENCIES: acuda-dmenu-system-exit

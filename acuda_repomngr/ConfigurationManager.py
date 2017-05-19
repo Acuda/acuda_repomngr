@@ -102,6 +102,10 @@ class ConfigurationPdo(PdoBase):
         return FileName.fix(self._data['DEB_BUILD_DIR'])
 
     @property
+    def DEB_BUILD_COMMAND(self):
+        return self._data['DEB_BUILD_COMMAND'].split(' ')
+
+    @property
     def DEB_CONTROL_TEMPLATE(self):
         return self._data['DEB_CONTROL_TEMPLATE']
 
@@ -229,20 +233,35 @@ class PackageEntry(object):
         return self.identifier == other.identifier
 
     def check(self):
+        if len(self.src_files) == 0:
+            return True
+
         existing = read_access = False
+        filetype = 'unknown'
         for filename in self.src_files:
             cps = ColorPrinter().cfg('g')
             cpf = ColorPrinter().cfg('r', st='b')
+
             existing = os.path.exists(filename)
             read_access = os.access(filename, os.R_OK)
 
+            filetype = 'unknown'
+            if os.path.isdir(filename):
+                filetype = 'directory'
+            if os.path.islink(filename):
+                filetype = 'link'
+            if os.path.isfile(filename):
+                filetype = 'file'
+
             print_info(
                 PIL.VERBOSE, filename,
+                filetype,
+                cps.fmt('(%s)' % filetype) if filetype != 'unknown' else cpf.fmt('(%s)' % filetype),
                 cps.fmt('(found)') if existing else cpf.fmt('(not found)'),
                 cps.fmt('(readable)') if read_access else cpf.fmt('(not readable)'),
                 indent=2
             )
-        return existing and read_access
+        return existing and read_access and filetype != 'unknown'
 
 class ConfigurationManager(object):
     def __init__(self):

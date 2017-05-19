@@ -64,6 +64,10 @@ class ParserExecute(object):
             print_exception(ex)
             exit(-1)
 
+    @staticmethod
+    def _print_step_info(funcname):
+        actionstring = ' '.join(funcname.upper().replace('_', ' ').split(' ')[1::2])
+        print_info(ColorPrinter().cfg('g', st='br').fmt(' {:-^50} '.format(' PERFORM %s ' % actionstring)))
 
     #############################
     #   S E C T I O N   D E V   #
@@ -71,15 +75,15 @@ class ParserExecute(object):
 
     @staticmethod
     def section_dev_action_config():
-        pass
+        printf_info(PIL.ERROR, 'not yet supported')
 
     @staticmethod
     def section_dev_action_args():
-        pass
+        printf_info(PIL.ERROR, 'not yet supported')
 
     @staticmethod
     def section_dev_action_cpconfig():
-        pass
+        printf_info(PIL.ERROR, 'not yet supported')
 
     @staticmethod
     def section_dev_action_pkg():
@@ -112,18 +116,24 @@ class ParserExecute(object):
 
             ColorPrinter().cfg('g', st='b').out(('{:=^%d}' % width).format(''))
 
+
     #############################ß
     #   S E C T I O N   D E B   #
     #############################
 
     @staticmethod
-    def _write_deb_control(package_yaml, dst_full_filename):
-        pass
+    def _parse_tampleate(template, placeholder_data):
+        for key, value in placeholder_data.items():
+            placeholder = '${%s}' % key
+            if placeholder in template:
+                template = template.replace(placeholder, os.path.expanduser(value))
+        print_info(PIL.DEBUG, 'creating from template:\n%s' % template.rstrip('\n'))
+        return template
 
     @staticmethod
     def section_deb_action_copy():
-        ctx = ContextManager()
-        cm = ctx.cm
+        ParserExecute._print_step_info(sys._getframe().f_code.co_name)
+        cm = ContextManager().cm
         assert(isinstance(cm, ConfigurationManager))
 
         print_info(PIL.DEBUG, 'DEB_BUILD_DIR:', cm.configuration.DEB_BUILD_DIR,
@@ -131,35 +141,91 @@ class ParserExecute(object):
         os.makedirs(cm.configuration.DEB_BUILD_DIR, exist_ok=True)
 
 
-
         for package in cm.packages:
             assert(isinstance(package, PackageEntry))
             print_info(ColorPrinter().cfg(st='b').fmt(package.identifier))
             package_directory = FileName(filename=package.identifier, basepath=cm.configuration.DEB_BUILD_DIR).fullfilename
 
-            print_info(PIL.VERBOSE, 'performing self check...', indent=1)
+            print_info(PIL.VERBOSE, 'performing self check ...', indent=1)
             if not package.check():
                 printf_info(PIL.WARN, 'self check failed, package skipped', indent=1)
                 continue
 
-
             if os.path.exists(package_directory) and os.path.isdir(package_directory):
-                printf_info(PIL.VERBOSE,
-                            'directory for package %s already exists, removing\n\t-> %s',
-                            package.identifier, package_directory)
-                #FIXME: ENABLE -> #shutil.rmtree(dst_package_directory)
+                printf_info(PIL.VERBOSE, 'directory for package %s already exists, removing:', package.identifier, indent=1)
+                printf_info(PIL.VERBOSE, '-> %s', package_directory, indent=2)
+                shutil.rmtree(package_directory)
 
+            template_content = ParserExecute._parse_tampleate(cm.configuration.DEB_CONTROL_TEMPLATE, package.package_dict)
+            package_control_filename = os.path.sep.join([package_directory, 'DEBIAN', 'control'])
+            os.makedirs(os.path.dirname(package_control_filename), exist_ok=True)
+            with open(package_control_filename, 'w') as f:
+                f.write(template_content)
 
+            full_dst_filename = [FileName(filename=dstf, basepath=package_directory).fullfilename for dstf in package.dst_files]
+            full_src_dst_filename_list = zip(package.src_files, full_dst_filename)
+            for src, dst in full_src_dst_filename_list:
+                if os.path.isfile(src):
+                    os.makedirs(os.path.dirname(dst), exist_ok=True)
+                    print_info(PIL.VERBOSE, 'copy file / link:', indent=2)
+                    printf_info(PIL.VERBOSE, 'from: %s', src, indent=3)
+                    printf_info(PIL.VERBOSE, '  to: %s', dst, indent=3)
+                    shutil.copy2(src, dst, follow_symlinks=False)
+                elif os.path.isdir(src):
+                    print_info(PIL.VERBOSE, 'copy directory:', indent=2)
+                    printf_info(PIL.VERBOSE, 'from: %s', src, indent=3)
+                    printf_info(PIL.VERBOSE, '  to: %s', dst, indent=3)
+                    shutil.copytree(src, dst, symlinks=True)
+                else:
+                    printf_info(PIL.ERROR, 'unknown file type for filename: %s', src, indent=2)
 
 
     @staticmethod
     def section_deb_action_build():
-        pass
+        ParserExecute._print_step_info(sys._getframe().f_code.co_name)
+
+        cm = ContextManager().cm
+        assert(isinstance(cm, ConfigurationManager))
+
+        deb_build_dir = cm.configuration.DEB_BUILD_DIR
+
+        for entry in os.listdir(deb_build_dir):
+            print_info(ColorPrinter().cfg(st='b').fmt(entry))
+            entry_filename = FileName(filename=entry, basepath=deb_build_dir).fullfilename
+            package_control_filename = FileName(filename=os.path.sep.join(['DEBIAN', 'control']),
+                                                basepath=entry_filename).fullfilename
+
+            if os.path.isfile(entry_filename):
+                continue
+
+            if not os.path.exists(package_control_filename) or not os.path.isfile(package_control_filename):
+                printf_info(PIL.WARN, 'no package_control_filename, package skipped', indent=1)
+                continue
+
+            cmd = cm.configuration.DEB_BUILD_COMMAND
+            cmd.append(entry)
+            msg = subprocess.check_output(cmd, cwd=deb_build_dir)
+            print_info(PIL.VERBOSE, msg.decode('utf-8').rstrip('\n'), indent=1)
 
 
     @staticmethod
     def section_deb_action_delete():
-        pass
+        ParserExecute._print_step_info(sys._getframe().f_code.co_name)
+
+        cm = ContextManager().cm
+        assert(isinstance(cm, ConfigurationManager))
+
+        deb_build_dir = cm.configuration.DEB_BUILD_DIR
+
+        printf_info(PIL.INFO, 'try deleting DEB_BUILD_DIR:')
+        printf_info(PIL.INFO, deb_build_dir, indent=1)
+
+        if not os.path.isdir(deb_build_dir) \
+           or not os.path.exists(deb_build_dir):
+            print_info(PIL.WARN, 'DEB_BUILD_DIR not available, no directory or not valid!')
+            return
+
+        shutil.rmtree(deb_build_dir)
 
 
     ###############################
@@ -168,15 +234,81 @@ class ParserExecute(object):
 
     @staticmethod
     def section_repo_action_init():
-        pass
+        ParserExecute._print_step_info(sys._getframe().f_code.co_name)
+
+        cm = ContextManager().cm
+        assert(isinstance(cm, ConfigurationManager))
+
+        repo_build_dir = cm.configuration.REPO_BUILD_DIR
+
+        repo_conf_dir = FileName(filename='conf', basepath=repo_build_dir).fullfilename
+        os.makedirs(repo_conf_dir, exist_ok=True)
+        os.makedirs(FileName(filename='incoming', basepath=repo_build_dir).fullfilename, exist_ok=True)
+
+        template_content = cm.configuration.REPO_DISTRIBUTIONS_TEMPLATE
+        repo_distributions_filename = FileName(filename='distributions', basepath=repo_conf_dir).fullfilename
+        with open(repo_distributions_filename, 'w') as f:
+            f.write(template_content)
+
+        print_info('done')
+
 
     @staticmethod
     def section_repo_action_includeall():
-        pass
+        ParserExecute._print_step_info(sys._getframe().f_code.co_name)
+
+        cm = ContextManager().cm
+        assert(isinstance(cm, ConfigurationManager))
+
+        deb_build_dir = cm.configuration.DEB_BUILD_DIR
+        repo_build_dir = cm.configuration.REPO_BUILD_DIR
+
+        for entry in os.listdir(deb_build_dir):
+            entry_filename = FileName(filename=entry, basepath=deb_build_dir).fullfilename
+
+            if not os.path.isfile(entry_filename) or not entry.endswith('.deb'):
+                continue
+
+            print_info(ColorPrinter().cfg(st='b').fmt(entry))
+
+            cmd = ['reprepro', 'includedeb']
+            cmd.append(cm.configuration.REPO_CODENAME)
+            cmd.append(entry_filename)
+
+            p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=repo_build_dir)
+            output, error = p.communicate()
+
+            if output:
+                print_info(PIL.INFO, output.decode('utf-8').rstrip('\n').replace('\n', '\n%s' % (' '*13)))
+
+            if error:
+                error_list = error.decode('utf-8').rstrip('\n').split('\n')
+                print_info(PIL.ERROR, error_list[0])
+                print_info(PIL.VERBOSE, ('\n%s' % (' '*13)).join(error_list[1:]))
+
 
     @staticmethod
     def section_repo_action_delete():
-        pass
+        ParserExecute._print_step_info(sys._getframe().f_code.co_name)
+
+        cm = ContextManager().cm
+        assert(isinstance(cm, ConfigurationManager))
+
+        repo_build_dir = cm.configuration.REPO_BUILD_DIR
+        repo_distributions_filename = os.path.sep.join([repo_build_dir, 'conf', 'distributions'])
+
+        printf_info(PIL.INFO, 'try deleting REPO_BUILD_DIR:')
+        printf_info(PIL.INFO, repo_build_dir, indent=1)
+
+        if not os.path.isdir(repo_build_dir) \
+           or not os.path.exists(repo_build_dir) \
+           or not os.path.isfile(repo_distributions_filename) \
+           or not os.path.exists(repo_distributions_filename):
+            print_info(PIL.WARN, 'REPO_BUILD_DIR not available, no directory or not valid!')
+            return
+
+        shutil.rmtree(repo_build_dir)
+
 
 
     ###############################
@@ -198,7 +330,19 @@ class ParserExecute(object):
 
     @staticmethod
     def section_aptgen_action_local():
-        pass
+        ParserExecute._print_step_info(sys._getframe().f_code.co_name)
 
+        cm = ContextManager().cm
+        assert(isinstance(cm, ConfigurationManager))
 
+        template_content = ParserExecute._parse_tampleate(cm.configuration.APT_LOCAL_TEMPLATE, cm.configuration._data)
+        apt_local_filename = '/etc/apt/sources.list.d/acurep-local.list'
 
+        if not os.access(os.path.dirname(apt_local_filename), os.W_OK):
+            printf_info(PIL.ERROR, 'insufficient permissions, file "%s" not writable', apt_local_filename)
+            return
+
+        with open(apt_local_filename, 'w') as f:
+            f.write(template_content)
+
+        print_info('done')
