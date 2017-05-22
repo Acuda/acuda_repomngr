@@ -128,7 +128,7 @@ class ParserExecute(object):
         for key, value in placeholder_data.items():
             placeholder = '${%s}' % key
             if placeholder in template:
-                template = template.replace(placeholder, os.path.expanduser(value))
+                template = template.replace(placeholder, os.path.expanduser(value if value else ''))
         print_info(PIL.DEBUG, 'creating from template:\n%s' % template.rstrip('\n'))
         return template
 
@@ -212,6 +212,8 @@ class ParserExecute(object):
         assert(isinstance(cm, ConfigurationManager))
 
         repo_build_dir = cm.configuration.REPO_BUILD_DIR
+        if not os.path.exists(repo_build_dir) or not os.path.isdir(repo_build_dir):
+            return
 
         cmd = ['reprepro', 'ls', package.name]
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=repo_build_dir)

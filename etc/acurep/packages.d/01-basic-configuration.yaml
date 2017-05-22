@@ -1,0 +1,7 @@
+PACKAGES:
+- PACKAGE_NAME: acuda-basic-configruation
+  PACKAGE_VERSION: 0.0.1
+  PACKAGE_DEPENDENCIES: acuda-basic-configruation-xdefaults
+- PACKAGE_NAME: acuda-basic-configruation-xdefaults
+  PACKAGE_VERSION: 0.0.1
+  PACKAGE_DEPENDENCIES:

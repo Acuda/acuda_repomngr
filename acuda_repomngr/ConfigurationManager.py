@@ -325,7 +325,7 @@ class ConfigurationManager(object):
         self.packages.remove_multiple_entries()
 
     def load_configuration_directory(self, filename):
-        conffile = os.listdir(filename)
+        conffile = [cf for cf in os.listdir(filename) if cf.endswith('.yaml')]
         conffile.sort()
         for cfile in conffile:
             ffn = os.sep.join([filename, cfile])

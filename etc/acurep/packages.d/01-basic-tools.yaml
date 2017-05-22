@@ -1,0 +1,16 @@
+PACKAGES:
+- PACKAGE_NAME: acuda-basic-tools
+  PACKAGE_VERSION: 0.0.1
+  PACKAGE_DEPENDENCIES: acuda-basic-tools-editors, acuda-basic-tools-utils, acuda-basic-tools-development, acuda-basic-tools-terminals
+- PACKAGE_NAME: acuda-basic-tools-editors
+  PACKAGE_VERSION: 0.0.1
+  PACKAGE_DEPENDENCIES: vim, geany
+- PACKAGE_NAME: acuda-basic-tools-utils
+  PACKAGE_VERSION: 0.0.1
+  PACKAGE_DEPENDENCIES: htop, ranger
+- PACKAGE_NAME: acuda-basic-tools-development
+  PACKAGE_VERSION: 0.0.1
+  PACKAGE_DEPENDENCIES: git, colortest
+- PACKAGE_NAME: acuda-basic-tools-terminals
+  PACKAGE_VERSION: 0.0.1
+  PACKAGE_DEPENDENCIES: rxvt-unicode, terminator

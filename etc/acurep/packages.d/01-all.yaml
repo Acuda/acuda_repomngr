@@ -1,0 +1,4 @@
+PACKAGES:
+- PACKAGE_NAME: acuda-all
+  PACKAGE_VERSION: 0.0.1
+  PACKAGE_DEPENDENCIES: acuda-basic-configruation, acuda-basic-tools
