@@ -13,6 +13,8 @@ import sys
 import shutil
 import subprocess
 
+from distutils.version import StrictVersion
+
 import yaml
 from acuda_repomngr.PrintInfo import *
 from acuda_repomngr.GenericContextManager import ContextManager
@@ -158,6 +160,8 @@ class ParserExecute(object):
                 printf_info(PIL.VERBOSE, '-> %s', package_directory, indent=2)
                 shutil.rmtree(package_directory)
 
+            ParserExecute._get_package_version(package)
+
             # write package control file
             template_content = ParserExecute._parse_tampleate(cm.configuration.DEB_CONTROL_TEMPLATE, package.package_dict)
             package_control_filename = os.path.sep.join([package_directory, 'DEBIAN', 'control'])
@@ -200,6 +204,52 @@ class ParserExecute(object):
                 msg = subprocess.check_output(cmd, cwd=package_directory)
                 if msg:
                     print_info(PIL.INFO, msg.decode('utf-8').rstrip('\n'))
+
+
+    @staticmethod
+    def _get_package_version(package):
+        cm = ContextManager().cm
+        assert(isinstance(cm, ConfigurationManager))
+
+        repo_build_dir = cm.configuration.REPO_BUILD_DIR
+
+        cmd = ['reprepro', 'ls', package.name]
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=repo_build_dir)
+        output, error = p.communicate()
+
+        if output:
+            output = [o.strip() for o in output.decode('utf-8').rstrip('\n').split('|')]
+            raw_version = output[1]
+
+            if '-' in raw_version:
+                repo_version, repo_build = raw_version.rsplit('-', 1)
+            else:
+                repo_version = raw_version
+                repo_build = '0'
+
+            if '-' in package.version:
+                pkg_version, pkg_build = package.version.rsplit('-', 1)
+            else:
+                pkg_version = package.version
+                pkg_build = '0'
+
+            print('repo_version', repo_version)
+            print('repo_build', repo_build)
+            print('pkg_version', pkg_version)
+            print('pkg_build', pkg_build)
+
+            if StrictVersion(pkg_version) == StrictVersion(repo_version):
+                build = str(max(int(pkg_build), int(repo_build)))
+
+                if int(build) <= int(repo_build):
+                    build = str(int(repo_build) + 1)
+
+                package.version = '-'.join([pkg_version, build])
+
+        if error:
+            error_list = error.decode('utf-8').rstrip('\n').split('\n')
+            print_info(PIL.ERROR, error_list[0])
+            print_info(PIL.VERBOSE, ('\n%s' % (' ' * 13)).join(error_list[1:]))
 
 
 
@@ -341,7 +391,7 @@ class ParserExecute(object):
     @staticmethod
     def section_auto_action_auto():
         ParserExecute.section_deb_action_delete()
-        ParserExecute.section_repo_action_delete()
+        #ParserExecute.section_repo_action_delete()
         ParserExecute.section_deb_action_copy()
         ParserExecute.section_deb_action_build()
         ParserExecute.section_repo_action_init()

@@ -217,7 +217,20 @@ class PackageEntry(object):
 
     @property
     def version(self):
-        return self.package_dict['PACKAGE_VERSION']
+        version = self.package_dict['PACKAGE_VERSION']
+        #if '-' in version:
+        #    version, build = version.rsplit('-', 1)
+        #    self.package_dict['PACKAGE_VERSION'] = version
+        #    self.build_version = build
+        return version
+
+    #@property
+    #def build_version(self):
+    #    return self.package_dict.get('PACKAGE_BUILD_VERSION', 0)
+
+    @version.setter
+    def version(self, value):
+        self.package_dict['PACKAGE_VERSION'] = value
 
     @property
     def src_relative_to(self):
