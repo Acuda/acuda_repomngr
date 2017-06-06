@@ -1,0 +1,16 @@
+PACKAGES:
+- PACKAGE_NAME: acurep
+  PACKAGE_VERSION: 0.0.1
+  PACKAGE_DEPENDENCIES: git, apt-transport-https, reprepro
+  SRC_RELATIVE_TO: /home/beistel/PycharmProjects
+  DST_RELATIVE_TO: /opt
+  FILES:
+  - acuda_repomngr/acuda_repomngr
+  - acuda_repomngr/etc
+  - acuda_repomngr/venv_acuda_repomngr
+  - acuda_repomngr/acurep.py
+  LINKS:
+  - TARGET: /opt/acuda_repomngr/acurep.py
+    NAME: /usr/local/bin/acurep
+  - TARGET: /opt/acuda_repomngr/etc/acurep
+    NAME: /etc/acurep
